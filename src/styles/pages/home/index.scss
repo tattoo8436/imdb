@@ -1,0 +1,12 @@
+.home {
+    &__title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    &__content {
+        @import './number-vote';
+        @import './trending';
+    }
+}
