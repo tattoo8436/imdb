@@ -1,35 +1,33 @@
 import { VideoCameraOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { accountApi } from "../../apis/accountApi";
-import { IAccountLogin } from "../../utils/type";
-import { ContextLocation } from "../../App";
+import { IAccountRegister } from "../../utils/type";
 
-const Login = () => {
+const Register = () => {
   const hookForm = useForm({
     defaultValues: {
       username: "",
       password: "",
+      email: "",
     },
     mode: "onChange",
   });
   const navigate = useNavigate();
-  const contextLocation: any = useContext(ContextLocation);
 
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = async (value: IAccountLogin) => {
+  const onSubmit = async (value: IAccountRegister) => {
     setLoading(true);
     try {
-      const { data } = await accountApi.login(value);
+      const { data } = await accountApi.register(value);
       console.log(data);
       setLoading(false);
-      localStorage.setItem("account", JSON.stringify(data));
-      navigate(contextLocation.preLocation);
-      window.location.reload();
+      toast.success("Đăng ký thành công", { autoClose: 3000 });
+      navigate("/login");
     } catch (error: any) {
       console.log(error);
       setLoading(false);
@@ -37,14 +35,14 @@ const Login = () => {
     }
   };
 
-  console.log(contextLocation.preLocation);
-
   return (
-    <div className="login">
-      <div className="login__content card">
-        <div className="login__content__header">
-          <VideoCameraOutlined className="login__content__header__icon" />
-          <div className="login__content__header__text">The Movie Database</div>
+    <div className="register">
+      <div className="register__content card">
+        <div className="register__content__header">
+          <VideoCameraOutlined className="register__content__header__icon" />
+          <div className="register__content__header__text">
+            The Movie Database
+          </div>
         </div>
 
         <form className="form" onSubmit={hookForm.handleSubmit(onSubmit)}>
@@ -104,23 +102,53 @@ const Login = () => {
             )}
           </div>
 
+          <div className="form__item">
+            <div className="form__item__label">Email</div>
+
+            <Controller
+              name="email"
+              control={hookForm.control}
+              rules={{
+                validate: {
+                  required: (v) => v.trim().length > 0 || "Email là bắt buộc",
+                  email: (v) =>
+                    Boolean(v.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g)) ||
+                    "Email không đúng định dạng",
+                },
+              }}
+              render={({ field, fieldState }) => (
+                <Input
+                  {...field}
+                  placeholder="Email"
+                  className="form__item__input"
+                  status={fieldState.error !== undefined ? "error" : ""}
+                />
+              )}
+            />
+            {hookForm.formState.errors.email && (
+              <p className="error-msg">
+                {hookForm.formState.errors.email.message}
+              </p>
+            )}
+          </div>
+
           <div className="form__btn">
             <Button type="primary" htmlType="submit" loading={loading}>
-              Đăng nhập
+              Đăng ký
             </Button>
           </div>
         </form>
 
-        <div className="login__content__footer">
-          <span className="login__content__footer__text">
-            Chưa có tài khoản?{" "}
+        <div className="register__content__footer">
+          <span className="register__content__footer__text">
+            Đã có tài khoản?{" "}
           </span>
 
-          <Link to="/register">Đăng ký ngay</Link>
+          <Link to="/login">Đăng nhập ngay</Link>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Register;

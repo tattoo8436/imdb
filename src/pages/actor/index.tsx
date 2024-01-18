@@ -1,201 +1,120 @@
-import { AgGridReact } from "ag-grid-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { getColumnDefs } from "./ColumnDefs";
-import { actorApi } from "../../apis/actorApi";
-import SearchBar from "./SearchBar";
-import { IActor, ISearchActor } from "../../utils/type";
-import { getCurrentAccount } from "../../utils";
-import TableFooter from "../../components/TableFooter";
-import ModalDelete from "../../components/ModalDelete";
-import { toast } from "react-toastify";
-import ModalAdd from "./ModalAdd";
-import { Button, Col, Row } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { useForm } from "react-hook-form";
-import { DEFAULT_ACTOR } from "../../utils/defaultValue";
-import ModalEdit from "./ModalEdit";
-import { DEFAULT_SEARCH } from "../../utils/defaultValue";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { IActor } from "../../utils/type";
+import { movieApi } from "../../apis/movieApi";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import { Col, Image, Row } from "antd";
+import { BASE_URL_API } from "../../utils";
+import dayjs from "dayjs";
+import { StarFilled } from "@ant-design/icons";
 
 const Actor = () => {
-  const gridRef: any = useRef(null);
-  const account = getCurrentAccount();
-  const hookFormActor = useForm({
-    defaultValues: DEFAULT_ACTOR,
-    mode: "onChange",
-  });
+  const [searchParams] = useSearchParams();
+  const actorId = searchParams.get("actorId");
+  const navigate = useNavigate();
 
-  const [listActors, setListActors] = useState({
-    loading: false,
-    data: [],
-    error: null,
-  });
-  const [isRefetch, setIsRefetch] = useState(false);
-  const [search, setSearch] = useState<ISearchActor>(DEFAULT_SEARCH);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [openModalDelete, setOpenModalDelete] = useState(false);
-  const [openModalAdd, setOpenModalAdd] = useState(false);
-  const [openModalEdit, setOpenModalEdit] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [rowSelected, setRowSelected] = useState<any>(null);
-
-  const defaultColDef: any = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-      editable: false,
-      flex: 1,
-      suppressMenu: true,
-      comparator: () => {
-        return;
-      },
-    }),
-    []
-  );
-
-  const columnDefs: any = getColumnDefs(
-    gridRef,
-    setOpenModalDelete,
-    setOpenModalEdit
-  );
+  const [actor, setActor] = useState<IActor | null>(null);
+  const [listMovies, setListMovies] = useState([]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchActor();
-  }, [isRefetch, search]);
+    fetchListMovies();
+  }, []);
 
   const fetchActor = async () => {
-    setListActors((pre) => ({ ...pre, loading: false }));
     try {
-      const { data } = await actorApi.searchActor(search);
-      console.log({ data });
-      setTotalRecords(data?.totals);
-      setListActors({
-        loading: false,
-        data: data?.data,
-        error: null,
-      });
+      const { data } = await movieApi.getActorById(actorId);
+      console.log(data);
+      setActor(data);
     } catch (error: any) {
       console.log(error);
-      setListActors({
-        loading: false,
-        data: [],
-        error,
-      });
     }
   };
 
-  const onSortChanged = (e: any) => {
-    const column = e.columnApi
-      .getColumnState()
-      .find((e: any) => e.sort !== null);
-    if (column !== undefined) {
-      setSearch({
-        ...search,
-        sortBy: column.colId,
-        orderBy: column.sort === "asc" ? "ASC" : "DESC",
-      });
-    } else {
-      setSearch({
-        ...search,
-        sortBy: null,
-        orderBy: null,
-      });
-    }
-  };
-
-  const onCancelDelete = () => {
-    setOpenModalDelete(false);
-  };
-
-  const onDelete = async () => {
-    setLoading(true);
+  const fetchListMovies = async () => {
     try {
-      const { data } = await actorApi.deleteActor(rowSelected?.id);
-      console.log({ data });
-      setLoading(false);
-      setOpenModalDelete(false);
-      setIsRefetch((pre) => !pre);
-      toast.success("Xoá thành công!", { autoClose: 3000 });
-    } catch (error) {
+      const { data } = await movieApi.getListMoviesByActor(actorId);
+      console.log(data);
+      setListMovies(data);
+    } catch (error: any) {
       console.log(error);
-      setLoading(false);
     }
   };
 
   return (
     <div className="actor">
-      <div className="actor__title">Quản lý diễn viên</div>
+      <Header />
 
-      <Row justify="space-between">
-        <Col span={4}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setOpenModalAdd(true)}
-          >
-            Thêm
-          </Button>
-        </Col>
+      <div className="actor__content">
+        <div className="actor__content__name">{actor?.name}</div>
 
-        <Col span={20}>
-          <SearchBar
-            search={search}
-            setSearch={setSearch}
-            setIsRefetch={setIsRefetch}
+        <div className="actor__content__job">Diễn viên</div>
+
+        <div className="actor__content__dob">
+          Ngày sinh: {actor?.dob ? dayjs(actor?.dob).format("DD/MM/YYYY") : ""}
+        </div>
+
+        <div className="actor__content__detail">
+          <img
+            className="actor__content__detail__image"
+            src={`${BASE_URL_API}/image/${actor?.image}`}
+            alt="Ảnh"
           />
-        </Col>
-      </Row>
 
-      <div
-        className="ag-theme-alpine actor__table"
-        style={{ width: "100%", height: "450px" }}
-      >
-        <AgGridReact
-          ref={gridRef}
-          rowData={listActors.data}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          animateRows={true}
-          onCellClicked={(e) => {
-            console.log(e);
-            setRowSelected(e.data);
-          }}
-          rowSelection={"single"}
-          localeText={{ noRowsToShow: "Không có dữ liệu" }}
-          onSortChanged={onSortChanged}
-        />
+          <div className="actor__content__detail__description">
+            {actor?.description}
+          </div>
+        </div>
+
+        <div className="actor__content__movie">
+          <div className="actor__content__movie__title">
+            Các bộ phim tham gia
+          </div>
+
+          <Row gutter={[24, 24]}>
+            {listMovies?.map((i: any) => (
+              <Col key={i.id} xs={12} md={8}>
+                <div
+                  className="item-movie"
+                  onClick={() => navigate(`/movie?movieId=${i.id}`)}
+                >
+                  <img
+                    className="item-movie__image"
+                    src={`${BASE_URL_API}/image/${i.image}`}
+                    alt="Ảnh"
+                  />
+
+                  <div className="item-movie__detail">
+                    <div className="item-movie__detail__name">{i.name}</div>
+
+                    <div className="item-movie__detail__score">
+                      <StarFilled />
+                      {i.numberVote > 0 ? Number(i.score).toFixed(1) : ""}/10
+                    </div>
+
+                    <div className="item-movie__detail__actor">
+                      Trong vai{" "}
+                      {
+                        i.listMovieActors?.find(
+                          (j: any) => j.actor.id == actorId
+                        )?.nameInMovie
+                      }
+                    </div>
+
+                    <div className="item-movie__detail__year">
+                      {dayjs(i.releaseDate).format("YYYY")}
+                    </div>
+                  </div>
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </div>
       </div>
 
-      <TableFooter
-        pageIndex={search.page}
-        pageSize={search.limit}
-        totalRecords={totalRecords}
-        setSearch={setSearch}
-        setIsRefetch={setIsRefetch}
-      />
-
-      <ModalDelete
-        openModal={openModalDelete}
-        loading={loading}
-        onCancel={onCancelDelete}
-        onDelete={onDelete}
-      />
-
-      <ModalAdd
-        hookForm={hookFormActor}
-        openModal={openModalAdd}
-        setOpenModal={setOpenModalAdd}
-        setIsRefetch={setIsRefetch}
-        account={account}
-      />
-
-      <ModalEdit
-        hookForm={hookFormActor}
-        actor={gridRef?.current?.api?.getSelectedRows()[0]}
-        openModal={openModalEdit}
-        setOpenModal={setOpenModalEdit}
-        setIsRefetch={setIsRefetch}
-        account={account}
-      />
+      <Footer />
     </div>
   );
 };

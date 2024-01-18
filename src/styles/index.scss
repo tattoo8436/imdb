@@ -1,13 +1,11 @@
 @import './common';
 @import './components/header';
-@import './components/menu-custom';
-@import './components/table-footer';
-@import './components/modal-delete';
-@import './components/layout';
+@import './components/footer';
 @import './pages/login';
+@import './pages/register';
 @import './pages/home/index';
+@import './pages/search/index';
 @import './pages/movie/index';
 @import './pages/episode/index';
 @import './pages/actor/index';
 @import './pages/director/index';
-@import './pages/genre/index';

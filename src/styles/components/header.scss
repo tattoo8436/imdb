@@ -9,7 +9,7 @@
     top: 0;
     width: 100%;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    z-index: 3;
+    z-index: 2;
 
     &__left {
         display: flex;
@@ -17,20 +17,27 @@
         margin-left: 1rem;
         cursor: pointer;
 
-        &__item {
-            padding: .5rem;
-            color: #fff;
-
-        }
-
         .logo {
             font-size: 1.5rem;
+            margin-right: 1rem;
         }
     }
 
     &__right {
         display: flex;
+        align-items: center;
         margin-right: 1rem;
+
+        &__search {
+            margin-right: 1rem;
+            cursor: pointer;
+        }
+
+        .divider {
+            width: 1px;
+            height: 1rem;
+            background-color: #fff;
+        }
 
         &__btn {
             padding: 1rem;

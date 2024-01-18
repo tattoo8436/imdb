@@ -1,15 +1,11 @@
-.movie{
-    &__title{
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
+.movie {
+    &__content {
+        margin-top: 80px;
+        padding: 0 5rem;
+        min-height: 80vh;
 
-    &__table{
-        margin-bottom: 1rem;
+        @import './movie-detail';
     }
-
-    @import './search-bar';
 }
 
-@import './modal';
+@import './modal-rating';

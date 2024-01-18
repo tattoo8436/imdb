@@ -1,16 +1,11 @@
-.episode{
-    &__title{
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
+.episode {
+    &__content {
+        margin-top: 80px;
+        padding: 0 5rem;
+        min-height: 80vh;
 
-    &__btn{
-        display: flex;
-        justify-content: flex-end;
-
-        &__item{
-            margin-left: 1rem;
-        }
+        @import './episode-detail';
     }
 }
+
+@import './modal-rating';

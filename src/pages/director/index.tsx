@@ -1,201 +1,108 @@
-import { PlusOutlined } from "@ant-design/icons";
-import { AgGridReact } from "ag-grid-react";
-import { Button, Col, Row } from "antd";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
-import { directorApi } from "../../apis/directorApi";
-import ModalDelete from "../../components/ModalDelete";
-import TableFooter from "../../components/TableFooter";
-import { getCurrentAccount } from "../../utils";
-import { DEFAULT_DIRECTOR } from "../../utils/defaultValue";
-import { ISearchDirector } from "../../utils/type";
-import { getColumnDefs } from "./ColumnDefs";
-import ModalAdd from "./ModalAdd";
-import ModalEdit from "./ModalEdit";
-import SearchBar from "./SearchBar";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { IDirector } from "../../utils/type";
+import { movieApi } from "../../apis/movieApi";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import { Col, Image, Row } from "antd";
+import { BASE_URL_API } from "../../utils";
+import dayjs from "dayjs";
+import { StarFilled } from "@ant-design/icons";
 
 const Director = () => {
-  const gridRef: any = useRef(null);
-  const account = getCurrentAccount();
-  const hookFormDirector = useForm({
-    defaultValues: DEFAULT_DIRECTOR,
-    mode: "onChange",
-  });
+  const [searchParams] = useSearchParams();
+  const directorId = searchParams.get("directorId");
 
-  const [listDirectors, setListDirectors] = useState([]);
-  const [isRefetch, setIsRefetch] = useState(false);
-  const [search, setSearch] = useState<ISearchDirector>({
-    accountAdmin: {
-      username: account?.username,
-      password: account?.password,
-    },
-    pageIndex: 1,
-    pageSize: 10,
-    name: "",
-  });
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [openModalDelete, setOpenModalDelete] = useState(false);
-  const [openModalAdd, setOpenModalAdd] = useState(false);
-  const [openModalEdit, setOpenModalEdit] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const defaultColDef: any = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-      editable: false,
-      flex: 1,
-      suppressMenu: true,
-      comparator: () => {
-        return;
-      },
-    }),
-    []
-  );
-
-  const columnDefs: any = getColumnDefs(
-    gridRef,
-    setOpenModalDelete,
-    setOpenModalEdit
-  );
+  const [director, setDirector] = useState<IDirector | null>(null);
+  const [listMovies, setListMovies] = useState([]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchDirector();
-  }, [isRefetch, search]);
+    fetchListMovies();
+  }, []);
 
   const fetchDirector = async () => {
-    setListDirectors([]);
     try {
-      const { data } = await directorApi.searchDirector(search);
-      console.log({ data });
-      setTotalRecords(data?.totalRecords);
-      setListDirectors(data?.listDirectors);
-    } catch (error) {
+      const { data } = await movieApi.getDirectorById(directorId);
+      console.log(data);
+      setDirector(data);
+    } catch (error: any) {
       console.log(error);
     }
   };
 
-  const onSortChanged = (e: any) => {
-    const column = e.columnApi
-      .getColumnState()
-      .find((e: any) => e.sort !== null);
-    if (column !== undefined) {
-      setSearch({
-        ...search,
-        sortBy: column.colId,
-        orderBy: column.sort === "asc" ? "ASC" : "DESC",
-      });
-    } else {
-      setSearch({
-        ...search,
-        sortBy: null,
-        orderBy: null,
-      });
-    }
-  };
-
-  const onCancelDelete = () => {
-    setOpenModalDelete(false);
-  };
-
-  const onDelete = async () => {
-    setLoading(true);
-    const rowSelected = gridRef?.current?.api?.getDisplayedRowAtIndex(
-      gridRef?.current?.api?.getFocusedCell().rowIndex
-    );
-    const payload = {
-      accountAdmin: {
-        username: search.accountAdmin?.username,
-        password: search.accountAdmin?.password,
-      },
-      id: rowSelected.data.id,
-    };
+  const fetchListMovies = async () => {
     try {
-      const { data } = await directorApi.deleteDirector(payload);
-      console.log({ data });
-      setLoading(false);
-      setOpenModalDelete(false);
-      setIsRefetch((pre) => !pre);
-      toast.success("Xoá thành công!", { autoClose: 3000 });
-    } catch (error) {
+      const { data } = await movieApi.getListMoviesByDirector(directorId);
+      console.log(data);
+      setListMovies(data);
+    } catch (error: any) {
       console.log(error);
-      setLoading(false);
     }
   };
 
   return (
     <div className="director">
-      <div className="director__title">Quản lý đạo diễn</div>
+      <Header />
 
-      <Row justify="space-between">
-        <Col span={4}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setOpenModalAdd(true)}
-          >
-            Thêm
-          </Button>
-        </Col>
+      <div className="director__content">
+        <div className="director__content__name">{director?.name}</div>
 
-        <Col span={20}>
-          <SearchBar
-            search={search}
-            setSearch={setSearch}
-            setIsRefetch={setIsRefetch}
+        <div className="director__content__job">Đạo diễn</div>
+
+        <div className="director__content__dob">
+          Ngày sinh:{" "}
+          {director?.dob ? dayjs(director?.dob).format("DD/MM/YYYY") : ""}
+        </div>
+
+        <div className="director__content__detail">
+          <img
+            className="director__content__detail__image"
+            src={`${BASE_URL_API}/image/${director?.image}`}
+            alt="Ảnh"
           />
-        </Col>
-      </Row>
 
-      <div
-        className="ag-theme-alpine director__table"
-        style={{ width: "100%", height: "450px" }}
-      >
-        <AgGridReact
-          ref={gridRef}
-          rowData={listDirectors}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          animateRows={true}
-          onCellClicked={(e) => console.log(e)}
-          rowSelection={"single"}
-          localeText={{ noRowsToShow: "Không có dữ liệu" }}
-          onSortChanged={onSortChanged}
-        />
+          <div className="director__content__detail__description">
+            {director?.description}
+          </div>
+        </div>
+
+        <div className="director__content__movie">
+          <div className="director__content__movie__title">
+            Các bộ phim đạo diễn
+          </div>
+
+          <Row gutter={[24, 24]}>
+            {listMovies?.map((i: any) => (
+              <Col key={i.id} xs={12} md={8}>
+                <div className="item-movie">
+                  <img
+                    className="item-movie__image"
+                    src={`${BASE_URL_API}/image/${i.image}`}
+                    alt="Ảnh"
+                  />
+
+                  <div className="item-movie__detail">
+                    <div className="item-movie__detail__name">{i.name}</div>
+
+                    <div className="item-movie__detail__score">
+                      <StarFilled />
+                      {Number(i.score).toFixed(1)}
+                    </div>
+
+                    <div className="item-movie__detail__year">
+                      {dayjs(i.releaseDate).format("YYYY")}
+                    </div>
+                  </div>
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </div>
       </div>
 
-      <TableFooter
-        pageIndex={search.pageIndex}
-        pageSize={search.pageSize}
-        totalRecords={totalRecords}
-        setSearch={setSearch}
-        setIsRefetch={setIsRefetch}
-      />
-
-      <ModalDelete
-        openModal={openModalDelete}
-        loading={loading}
-        onCancel={onCancelDelete}
-        onDelete={onDelete}
-      />
-
-      <ModalAdd
-        hookForm={hookFormDirector}
-        openModal={openModalAdd}
-        setOpenModal={setOpenModalAdd}
-        setIsRefetch={setIsRefetch}
-        account={account}
-      />
-
-      <ModalEdit
-        hookForm={hookFormDirector}
-        director={gridRef?.current?.api?.getSelectedRows()[0]}
-        openModal={openModalEdit}
-        setOpenModal={setOpenModalEdit}
-        setIsRefetch={setIsRefetch}
-        account={account}
-      />
+      <Footer />
     </div>
   );
 };
