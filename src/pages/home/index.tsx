@@ -32,8 +32,8 @@ const Home = () => {
   const [number, setNumber] = useRecoilState(numberState);
 
   useEffect(() => {
-    // fetchTrendingMovie();
-    // fetchNewMovie();
+    fetchTrendingMovie();
+    fetchNewMovie();
 
     //Firebase notification
     // getToken(messaging, {
@@ -55,12 +55,6 @@ const Home = () => {
     //   console.log("Received: ", payload);
     //   toast.info(payload.notification?.body);
     // });
-
-    //Socket
-    const socket = new WebSocket("ws://localhost:4000");
-    socket.onopen = (e) => {
-      console.log(e);
-    };
   }, []);
 
   const handleAddAccount = async () => {
@@ -131,24 +125,6 @@ const Home = () => {
     }
   };
 
-  const fetch1 = new Promise((resolve) => {
-    resolve("1");
-  });
-  const fetch2 = new Promise((resolve, reject) => {
-    reject("2");
-  });
-  const fetch3 = new Promise((resolve) => {
-    resolve("3");
-  });
-
-  Promise.all([fetch1, fetch2, fetch3])
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-
   return (
     <div className="home">
       <Header />
@@ -181,30 +157,6 @@ const Home = () => {
         <Button className="d-none" type="primary" onClick={fetchTrendingMovie}>
           Top Trending
         </Button>
-
-        <Button
-          className="d-nonee"
-          type="primary"
-          onClick={() => {
-            dispatch(calculatorSlice.actions.add(1));
-          }}
-        >
-          Add
-        </Button>
-
-        <Button
-          className="d-nonee"
-          type="primary"
-          onClick={() => {
-            setTimeout(() => {
-              setNumber((pre) => pre - 2);
-            }, 1000);
-          }}
-        >
-          Remove
-        </Button>
-
-        <p>{number}</p>
 
         <div className="home__content__trending">
           <div className="home__content__trending__title">
